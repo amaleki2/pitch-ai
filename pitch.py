@@ -7,7 +7,7 @@ SIMLI_URL = "https://api.simli.ai/textToVideoStream"
 
 class Pitch(BaseModel):
     
-    video_file_path: str
+    video_url: str
 
     def read_video(self):
         pass
@@ -46,3 +46,5 @@ class Pitch(BaseModel):
             hls_url = response_data.get('hls_url')
             return hls_url
         
+
+    def 
