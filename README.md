@@ -18,7 +18,7 @@ Here's an improved version of the markdown:
 4. **Run the Refinement Script**  
    Execute the following command, replacing the paths as needed:  
    ```bash
-   python refinePitchText2.py 'a.json' '/home/znasif/llama.cpp/models/Llama-3.1.gguf'
+   python refinePitchText.py 'a.json' '/home/znasif/llama.cpp/models/Llama-3.1.gguf'
    ```
 
 ---
