@@ -1,50 +1,42 @@
+import subprocess
 import os
-
 from pydantic import BaseModel
+from trancription import Transcriber
+from simli import Simli
 
-SIMLI_URL = "https://api.simli.ai/textToVideoStream"
+
 
 
 class Pitch(BaseModel):
     
-    video_url: str
+    video_path: str
 
-    def read_video(self):
-        pass
+    def get_audio_path(self):
+        video_extension = self.video_path.split(".")[-1]
+        audio_path = self.video_path.replace(video_extension, "wav")
+        return audio_path
 
-    def read_audio(self):
-        pass
+    def load_audio_file(self):
+        audio_path = self.get_audio_path()
+        if os.path.exists(audio_path):
+            return
+        
+        command = f"ffmpeg -i {self.video_path} -ab 160k -ac 2 -ar 44100 -vn {audio_path}"
+        subprocess.call(command, shell=True)
 
-    def read_transcription(self):
-        pass
+    def get_transcription(self):
+        self.load_audio_file()
+        audio_path = self.get_audio_path()
+        transcriber = Transcriber(audo_file_path=audio_path)
+        return transcriber.transcribe()
 
     def improve_transcription(self):
         pass
 
     def create_new_video(self, text):
-
-        payload = {
-            "ttsAPIKey": os.getenv("ELEVENLABS_API_KEY"),
-            "simliAPIKey": os.getenv("SIMLI_API_KEY"),
-            "faceId": "tmp9i8bbq7c",
-            "requestBody": {
-                "audioProvider": "ElevenLabs",
-                "text": text,
-                "voiceName": "pMsXgVXv3BLzUgSXRplE",
-                "model_id": "eleven_turbo_v2",
-                "voice_settings": {
-                    "stability": 0.1,
-                    "similarity_boost": 0.3,
-                    "style": 0.2
-                }
-            }
-        }
-        headers = {"Content-Type": "application/json"}
-        response = requests.request("POST", SIMLI_URL, json=payload, headers=headers)
-        response_data = response.json()
-        if response.status_code == 200:
-            hls_url = response_data.get('hls_url')
-            return hls_url
+        return Simli(text).get_video_url()
         
 
-    def 
+if __name__ == "__main__":
+    pitch = Pitch(video_path="/Users/amaleki/Downloads/video.mp4")
+    pitch.get_transcription()
