@@ -1,5 +1,5 @@
 import os
-
+import requests
 from pydantic import BaseModel
 
 SIMLI_URL = "https://api.simli.ai/textToVideoStream"
@@ -7,7 +7,7 @@ SIMLI_URL = "https://api.simli.ai/textToVideoStream"
 
 class Pitch(BaseModel):
     
-    video_file_path: str
+    video_url: str
 
     def read_video(self):
         pass
@@ -45,4 +45,3 @@ class Pitch(BaseModel):
         if response.status_code == 200:
             hls_url = response_data.get('hls_url')
             return hls_url
-        
