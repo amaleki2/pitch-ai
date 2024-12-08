@@ -39,17 +39,7 @@ class Transcriber(BaseModel):
 
     def transcribe(self):
         try:
-            
-            before = datetime.now()
-            response = self._transcribe()
-            after = datetime.now()
-            print(response.to_json(indent=4))
-            print("")
-            difference = after - before
-            print(f"time: {difference.seconds}")       
-
+            response = self._transcribe()   
+            return response
         except Exception as e:
-            print(f"Exception: {e}")
-
-        
-        return response
+            raise RuntimeError(f"transcription failed with {e}")
