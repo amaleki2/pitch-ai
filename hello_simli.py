@@ -25,9 +25,9 @@ def run(video_path: str):
         var player = videojs('my-video');
     </script>
     """
-       st.ccukdhnbgiihlrvinctnrtdhhjuekkfgvomponents.v1.html(video_html, height=300)
+       st.components.v1.html(video_html, height=300)
     
 
 if __name__ == "__main__":
-    video_path = "video.mp4"
+    video_path = "data/video.mp4"
     run(video_path)
