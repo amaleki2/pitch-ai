@@ -1,0 +1,75 @@
+{
+    "metadata": {
+      "transaction_key": "pitch-demo",
+      "request_id": "demo-pitch-001",
+      "sha256": "a123b456c789d012e345f678g901h234i567j890k123l456m789n012o345p678",
+      "created": "2024-12-07T19:20:00.000Z",
+      "duration": 60,
+      "channels": 1,
+      "models": [
+        "pitch-v1"
+      ],
+      "model_info": {
+        "pitch-v1": {
+          "name": "Pitch Generator Model",
+          "version": "2024-12-01.10001",
+          "arch": "presentation-ai"
+        }
+      }
+    },
+    "results": {
+      "channels": [
+        {
+          "alternatives": [
+            {
+              "transcript": "Have you ever wished you could perfect your video pitch without starting over? Introducing *Pitch*, an AI-powered solution that refines your videos effortlessly. By transcribing your speech with Deepgram, enhancing your delivery with Simli, and synchronizing your video with LipSync AI, we transform your recordings into polished presentations. Whether it's for a TED Talk, investor pitch, or casual vlog, *Pitch* ensures clarity, professionalism, and style. With intuitive tools powered by Python, React, and AWS, *Pitch* is your go-to for seamless communication refinement. Try *Pitch* today and make every presentation unforgettable!",
+              "confidence": 0.995,
+              "words": [
+                {
+                  "word": "Have",
+                  "start": 0.1,
+                  "end": 0.2,
+                  "confidence": 1.0
+                },
+                {
+                  "word": "you",
+                  "start": 0.2,
+                  "end": 0.3,
+                  "confidence": 0.998
+                },
+                {
+                  "word": "ever",
+                  "start": 0.3,
+                  "end": 0.4,
+                  "confidence": 0.997
+                }
+              ],
+              "paragraphs": {
+                "transcript": "Have you ever wished you could perfect your video pitch without starting over? Introducing *Pitch*, an AI-powered solution that refines your videos effortlessly. By transcribing your speech with Deepgram, enhancing your delivery with Simli, and synchronizing your video with LipSync AI, we transform your recordings into polished presentations. Whether it's for a TED Talk, investor pitch, or casual vlog, *Pitch* ensures clarity, professionalism, and style. With intuitive tools powered by Python, React, and AWS, *Pitch* is your go-to for seamless communication refinement. Try *Pitch* today and make every presentation unforgettable!",
+                "paragraphs": [
+                  {
+                    "sentences": [
+                      {
+                        "text": "Have you ever wished you could perfect your video pitch without starting over?",
+                        "start": 0.1,
+                        "end": 3.0
+                      },
+                      {
+                        "text": "Introducing *Pitch*, an AI-powered solution that refines your videos effortlessly.",
+                        "start": 3.1,
+                        "end": 6.5
+                      }
+                    ],
+                    "num_words": 90,
+                    "start": 0.1,
+                    "end": 60.0
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+  
