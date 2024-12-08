@@ -50,6 +50,5 @@ class Transcriber(BaseModel):
 
         except Exception as e:
             print(f"Exception: {e}")
-
-        
+            raise RuntimeError(e)
         return response.to_json(indent=4)

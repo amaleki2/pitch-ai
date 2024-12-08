@@ -34,7 +34,15 @@ class Pitch(BaseModel):
         self.create_new_video(text)
 
     def create_new_video(self, text):
-        return Simli(text).get_video_url()
+        return Simli(text=text).get_video_url()
+    
+    async def get_new_video_urls(self):
+        transcript = json.loads(self.get_transcription())
+        print("Transcription done")
+        text = await refinePitch(transcript, "/home/znasif/llama.cpp/models/Llama-3.1.gguf", 8080, "Make it very funny")
+        print(text)
+        new_video_urls = Simli(text=text).get_video_url()
+        return new_video_urls
 
 async def main():
     pitch = Pitch(video_path="video.mp4")
