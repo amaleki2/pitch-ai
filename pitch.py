@@ -1,12 +1,9 @@
 import subprocess
-import os
+import os, asyncio, json
 from pydantic import BaseModel
 from trancription import Transcriber
 from simli import Simli
-import json
-
-
-
+from refinePitchText2 import refinePitch
 
 class Pitch(BaseModel):
     
@@ -31,19 +28,17 @@ class Pitch(BaseModel):
         transcriber = Transcriber(audo_file_path=audio_path)
         return transcriber.transcribe()
 
-    def improve_transcription(self, transcription):
-        return transcription.results.channels[0].alternatives[0].transcript
-    
-    def get_new_video_urls(self):
-        transcription = self.get_transcription()
-        new_transcription = self.improve_transcription(transcription)
-        new_video_urls = Simli(text=new_transcription).get_video_url()
-        return new_video_urls
-    
-        
+    async def improve_transcription(self):
+        transcript = json.loads(self.get_transcription())
+        text = await refinePitch(transcript, "/home/znasif/llama.cpp/models/Llama-3.1.gguf", 8080, "Make it very funny")
+        self.create_new_video(text)
+
+    def create_new_video(self, text):
+        return Simli(text).get_video_url()
+
+async def main():
+    pitch = Pitch(video_path="video.mp4")
+    await pitch.improve_transcription()
 
 if __name__ == "__main__":
-    pitch = Pitch(video_path="data/video.mp4")
-    url = pitch.get_new_video_urls()
-    print(url)
-    
+    asyncio.run(main())

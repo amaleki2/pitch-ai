@@ -1,16 +1,14 @@
 import subprocess
-import requests
 import json
 import sys
 import httpx
 import asyncio
-import time
 import argparse
 
 class LlamaCppServerModifier:
     def __init__(self, model_path, port=8080, host='127.0.0.1'):
         """
-        Initialize the Llama.cpp server modifier.
+        Initialize the Llama.cpp server modifier with async support.
         
         :param model_path: Path to the GGUF model file
         :param port: Port to run the server on
@@ -20,10 +18,11 @@ class LlamaCppServerModifier:
         self.port = port
         self.host = host
         self.server_process = None
-        
-    def start_server(self):
+        self.client = None
+    
+    async def start_server(self):
         """
-        Start the llama.cpp server.
+        Asynchronously start the llama.cpp server.
         """
         # Construct the server launch command
         server_command = [
@@ -33,7 +32,6 @@ class LlamaCppServerModifier:
             '--port', str(self.port)
         ]
         
-        #try:
         # Launch the server as a subprocess
         self.server_process = subprocess.Popen(
             server_command, 
@@ -42,40 +40,42 @@ class LlamaCppServerModifier:
             text=True
         )
         
-        # Wait a moment for the server to start
-        time.sleep(20)
-        #a = input()
-        # Verify server is running
-        response = self._test_server_connection()
-        if response:
-            print(f"Llama.cpp server started successfully on {self.host}:{self.port}")
-        else:
-            raise RuntimeError("Could not connect to the server")
-            
-        # except Exception as e:
-        #     print(f"Error starting server: {e}")
-        #     self._stop_server()
-        #     raise
+        # Create async HTTP client
+        self.client = httpx.AsyncClient(timeout=30.0)
+        
+        # Wait for server to be ready with exponential backoff
+        max_attempts = 10
+        for attempt in range(max_attempts):
+            try:
+                response = await self._test_server_connection()
+                if response:
+                    print(f"Llama.cpp server started successfully on {self.host}:{self.port}")
+                    return
+                await asyncio.sleep(2 ** attempt)  # Exponential backoff
+            except Exception as e:
+                print(f"Connection attempt {attempt + 1} failed: {e}")
+        
+        raise RuntimeError("Could not connect to the server after multiple attempts")
     
-    def _test_server_connection(self):
+    async def _test_server_connection(self):
         """
-        Test connection to the server.
+        Async test connection to the server.
         
         :return: True if server is responsive, False otherwise
         """
         try:
-            response = requests.get(f'http://{self.host}:{self.port}/health')
+            response = await self.client.get(f'http://{self.host}:{self.port}/health')
             return response.status_code == 200
-        except requests.RequestException:
+        except (httpx.RequestError, httpx.HTTPStatusError):
             return False
     
-    def modify_text(self, 
+    async def modify_text(self, 
                     original_text, 
                     instruction="Rewrite the text to be more concise",
                     max_tokens=150,
                     temperature=0.7):
         """
-        Modify text using the running llama.cpp server.
+        Modify text using the running llama.cpp server asynchronously.
         
         :param original_text: Text to be modified
         :param instruction: Specific instruction for text modification
@@ -94,33 +94,34 @@ class LlamaCppServerModifier:
             "stop": ["\n"]
         }
         
-        #try:
-        # Send request to the server
-        response = requests.post(
-            f'http://{self.host}:{self.port}/completion', 
-            json=payload
-        )
+        try:
+            # Send async request to the server
+            response = await self.client.post(
+                f'http://{self.host}:{self.port}/completion', 
+                json=payload
+            )
 
-        #time.sleep(20)
+            # Check if request was successful
+            if response.status_code == 200:
+                # Extract the generated text
+                result = response.json()
+                modified_text = result.get('content', '').strip()
+                return modified_text
+            else:
+                print(f"Server error: {response.status_code}")
+                return None
         
-        # Check if request was successful
-        if response.status_code == 200:
-            # Extract the generated text
-            result = response.json()
-            modified_text = result.get('content', '').strip()
-            return modified_text
-        else:
-            print(f"Server error: {response.status_code}")
+        except (httpx.RequestError, httpx.HTTPStatusError) as e:
+            print(f"Request error: {e}")
             return None
-        
-        # except requests.RequestException as e:
-        #     print(f"Request error: {e}")
-        #     return None
     
-    def _stop_server(self):
+    async def _stop_server(self):
         """
-        Stop the llama.cpp server.
+        Async method to stop the llama.cpp server.
         """
+        if self.client:
+            await self.client.aclose()
+        
         if self.server_process:
             print("Stopping llama.cpp server...")
             self.server_process.terminate()
@@ -133,18 +134,18 @@ class LlamaCppServerModifier:
             
             print("Server stopped.")
     
-    def __enter__(self):
+    async def __aenter__(self):
         """
-        Context manager entry - start the server.
+        Async context manager entry - start the server.
         """
-        self.start_server()
+        await self.start_server()
         return self
     
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
         """
-        Context manager exit - stop the server.
+        Async context manager exit - stop the server.
         """
-        self._stop_server()
+        await self._stop_server()
 
 def extract_transcript_from_json(json_path):
     """
@@ -165,7 +166,7 @@ def extract_transcript_from_json(json_path):
         print(f"Error extracting transcript: {e}")
         return None
 
-def main():
+async def refinePitch():
     # Set up argument parsing
     parser = argparse.ArgumentParser(description="Llama.cpp Server Text Modifier")
     parser.add_argument('json_path', help='Path to the input JSON file')
@@ -190,9 +191,9 @@ def main():
         "Simplify any jargon, emphasize key benefits, and include a strong call-to-action"
     ]
     
-    # Use context manager to handle server lifecycle
+    # Use async context manager to handle server lifecycle
     try:
-        with LlamaCppServerModifier(args.model_path, port=args.port) as modifier:
+        async with LlamaCppServerModifier(args.model_path, port=args.port) as modifier:
             # Interactive modification loop
             while True:
                 print("\n--- Available Instructions ---")
@@ -209,7 +210,7 @@ def main():
                     elif 1 <= choice <= len(instructions):
                         # Modify text with selected instruction
                         instruction = instructions[choice - 1]
-                        modified_text = modifier.modify_text(
+                        modified_text = await modifier.modify_text(
                             transcript, 
                             instruction=instruction+". keep the speech length same."
                         )
@@ -217,9 +218,14 @@ def main():
                         # Display result
                         print("\n--- Modified Text ---")
                         print(modified_text)
+                    elif choice == -1:
+                        respond = "I'll ask you five questions about your context and requirements. Based on that I'll refine your pitch"
+                        print(respond)
+
+
                     else:
                         instruction = input("Enter your own prompt: ")
-                        modified_text = modifier.modify_text(
+                        modified_text = await modifier.modify_text(
                             transcript, 
                             instruction=instruction+". keep the speech length same."
                         )
@@ -235,4 +241,4 @@ def main():
         print(f"An error occurred: {e}")
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(refinePitch())
